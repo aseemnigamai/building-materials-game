@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Materials Game</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI'; background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%); color: #333; min-height: 100vh; padding: 20px; }
+        .container { width: 100%; max-width: 1000px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #ff6b35 0%, #cc4400 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 1.5rem; }
+        .header h1 { font-size: 32px; margin-bottom: 0.5rem; }
+        .card { background: white; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .card h2 { font-size: 24px; margin-bottom: 1.5rem; color: #222; }
+        .card h3 { font-size: 16px; margin-top: 1.5rem; margin-bottom: 1rem; color: #ff6b35; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        input:focus, select:focus { outline: none; border-color: #ff6b35; box-shadow: 0 0 0 3px rgba(255,107,53,0.1); }
+        button { padding: 12px 24px; font-size: 14px; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer; transition: 0.2s; margin-right: 8px; margin-bottom: 8px; }
+        button:hover { background: #f8f9fa; border-color: #ff6b35; }
+        button.primary { background: #ff6b35; color: white; border-color: #ff6b35; }
+        button.primary:hover { background: #cc4400; }
+        button.success { background: #28a745; color: white; border-color: #28a745; }
+        button.danger { background: #dc3545; color: white; border-color: #dc3545; }
+        .logout-btn { position: absolute; top: 20px; right: 20px; background: #ff6b35; color: white; border-color: #ff6b35; }
+        .alert { padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+        .alert-info { background: #e7f5ff; border: 1px solid #a5d8ff; color: #0066cc; }
+        .alert-success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .alert-warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404; }
+        .hidden { display: none; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        table th { background: #ff6b35; color: white; padding: 12px; text-align: left; }
+        table td { padding: 10px 12px; border-bottom: 1px solid #ddd; }
+        .section { display: none; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #ddd; }
+        .section.active { display: block; }
+        .rank-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-weight: 600; font-size: 12px; margin: 2px; }
+        .rank-1 { background: #d4edda; color: #155724; }
+        .rank-2 { background: #cce5ff; color: #004085; }
+        .rank-3 { background: #fff3cd; color: #856404; }
+        .rank-4 { background: #f8d7da; color: #721c24; }
+        .captive-box { background: #d4edda; border: 2px solid #28a745; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; }
+        .captive-value { font-size: 24px; font-weight: 700; color: #155724; margin: 0.5rem 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ Building Materials Game</h1>
+            <p>Phase 1: Bid Strategy → Phase 2: Business Planning</p>
+        </div>
+
+        <!-- LOGIN SCREEN -->
+        <div id="loginScreen" class="card">
+            <h2>Welcome</h2>
+            <div class="alert alert-info">
+                <strong>Game Flow:</strong><br>
+                1. Login with your business name<br>
+                2. Set your competitive pricing (Phase 1)<br>
+                3. Plan your operations (Phase 2)<br>
+                4. Admin calculates financial results
+            </div>
+            <div class="form-group">
+                <label class="form-label">Your Business Name</label>
+                <input type="text" id="username" placeholder="Enter your business name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="password" placeholder="Enter password (admin only)">
+                <p style="font-size: 13px; color: #666; margin-top: 6px;">
+                    ℹ️ <strong>Participants do not require a password</strong> — leave it blank.<br>
+                    🔒 <strong>Admin requires a password</strong> to access the dashboard.
+                </p>
+            </div>
+            <button class="primary" onclick="login()">LOGIN</button>
+        </div>
+
+        <!-- GAME FLOW -->
+        <div id="gameFlow" class="card hidden">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+
+            <!-- PHASE 1 -->
+            <div id="phase1Section" class="section active">
+                <h2>💰 PHASE 1: Set Your Pricing</h2>
+                
+                <div class="alert alert-info">
+                    <strong>Example — Allocation Structure (Captive Supply):</strong><br>
+                    • Lowest Price (Rank 1): 100% = 4,000 m³/month<br>
+                    • Rank 2: 90% = 3,600 m³/month<br>
+                    • Rank 3: 80% = 3,200 m³/month<br>
+                    • Highest Price (Rank 4): 70% = 2,800 m³/month<br>
+                    <strong>⚖️ Tie-Breaker Rule:</strong> If two or more participants quote the same price, the participant who <strong>submitted first</strong> gets the better rank.
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Your Selling Price (₹/m³)</label>
+                    <input type="number" id="aspBid" placeholder="Enter your price (max ₹4,500/m³)" min="1000" max="4500" step="100">
+                    <p style="font-size: 13px; color: #cc4400; margin-top: 6px;">
+                        ⚠️ Maximum price that can be quoted is <strong>₹4,500/m³</strong> (Minimum: ₹1,000/m³)
+                    </p>
+                </div>
+
+                <div class="form-group">
+                    <button class="primary" onclick="submitASPBid()">📤 SUBMIT PRICING</button>
+                </div>
+
+                <div id="auctionResults" style="display: none;">
+                    <h3>📊 Results</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Business</th>
+                                <th>Price (₹)</th>
+                                <th>Alloc %</th>
+                                <th>Volume (m³)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                    <div id="yourResult"></div>
+                </div>
+            </div>
+
+            <!-- PHASE 2 -->
+            <div id="phase2Section" class="section">
+                <h2>📋 PHASE 2: Operational Planning</h2>
+                
+                <div id="phase2Instructions" class="alert alert-success" style="display: none;">
+                    <strong>✓ Phase 1 Complete!</strong> Submit operational decisions below.
+                </div>
+
+                <h3>Decision 1: Plant Size</h3>
+                <div class="form-group">
+                    <select id="capacity">
+                        <option value="">-- Choose --</option>
+                        <option value="60">Small: 60 m³/day | Monthly: 7,000 m³ | Investment: ₹3.5 Cr</option>
+                        <option value="90">Medium: 90 m³/day | Monthly: 8,000 m³ | Investment: ₹4.0 Cr</option>
+                        <option value="120">Large: 120 m³/day | Monthly: 10,000 m³ | Investment: ₹4.5 Cr</option>
+                    </select>
+                </div>
+
+                <h3>Decision 2: Royalty for Commercial Volume</h3>
+                <div class="form-group">
+                    <select id="royalty" onchange="updateCommercialVolume()">
+                        <option value="">-- Choose --</option>
+                        <option value="150">₹150/m³ → Commercial = 80% of Available</option>
+                        <option value="250">₹250/m³ → Commercial = 90% of Available</option>
+                        <option value="350">₹350/m³ → Commercial = 100% of Available</option>
+                    </select>
+                </div>
+                <div id="commercialDisplay" style="background: #e7f5ff; padding: 10px; border-radius: 6px; margin-bottom: 1rem; display: none;">
+                    <strong>Commercial Market Size:</strong> <span id="commVolume">—</span> m³/month
+                </div>
+
+                <h3>Decision 3: Fleet Size</h3>
+                <div class="form-group">
+                    <label class="form-label">Captive Delivery Fleet (800 m³ capacity each)</label>
+                    <input type="number" id="captiveTmCount" placeholder="Enter number of captive trucks" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Commercial Delivery Fleet (400 m³ capacity each)</label>
+                    <input type="number" id="commercialTmCount" placeholder="Enter number of commercial trucks" min="0">
+                </div>
+
+                <h3>Decision 4: Required Funds for Working Capital + Capex</h3>
+                <div class="form-group">
+                    <label class="form-label">Required Funds for Working Capital + Capex (₹ Crore)</label>
+                    <input type="number" id="fundingAmount" placeholder="Enter funds arranged (₹ Crore)" min="0" step="0.1">
+                    <p style="font-size: 13px; color: #cc4400; margin-top: 6px;">
+                        ⚠️ If your arranged funds fall short of the total requirement (CAPEX + Working Capital), the shortfall will be financed at <strong>DOUBLE the interest rate (36% p.a.)</strong> instead of 18% p.a.
+                    </p>
+                </div>
+
+                <h3>Decision 5: Payment Terms</h3>
+                <div class="form-group">
+                    <select id="paymentTerms" onchange="updateASPAdjustment()">
+                        <option value="30">30 days (Price -₹75/m³)</option>
+                        <option value="60" selected>60 days (No adjustment)</option>
+                        <option value="90">90 days (Price +₹50/m³)</option>
+                        <option value="120">120 days (Price +₹100/m³)</option>
+                    </select>
+                </div>
+
+                <div id="aspAdjustmentDisplay" class="alert alert-info" style="display: none;">
+                    <strong>Price Adjustment:</strong><br>
+                    Base Price: ₹<span id="bidASP">3500</span>/m³ → Effective: ₹<span id="effectiveASP">3500</span>/m³
+                </div>
+
+                <div class="form-group">
+                    <button class="primary" onclick="submitPhase2()">📤 SUBMIT PLAN</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN DASHBOARD -->
+        <div id="adminDash" class="card hidden">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+            <h2>⚙️ Admin Dashboard</h2>
+
+            <div class="alert alert-info">
+                <strong>🎮 GAME CONTROL:</strong><br>
+                <button class="danger" onclick="adminStartNewGame()" style="width: 100%; margin-top: 0.5rem;">
+                    🔄 START NEW GAME (Clear All)
+                </button>
+            </div>
+
+            <h3>Phase 1: Pricing Status</h3>
+            <label style="font-weight: 600;" id="bidCountDisplay">Waiting for submissions...</label>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Business</th>
+                        <th>Price (₹)</th>
+                        <th>Alloc %</th>
+                        <th>Volume (m³)</th>
+                    </tr>
+                </thead>
+                <tbody id="adminTableBody"></tbody>
+            </table>
+
+            <button class="primary" onclick="adminRefreshResults()" style="margin-bottom: 2rem;">🔄 Refresh</button>
+
+            <h3>Phase 2: Submitted Plans</h3>
+            <div class="form-group">
+                <label class="form-label">Select Business</label>
+                <select id="adminParticipantSelect" onchange="adminLoadParticipantData()">
+                    <option value="">-- Select --</option>
+                </select>
+            </div>
+
+            <div id="adminParticipantData" style="display: none;">
+                <div id="adminProposalData"></div>
+                <div style="margin: 1.5rem 0;">
+                    <button class="primary" onclick="adminCalculateFinancials()">🧮 CALCULATE RESULTS (48 Months)</button>
+                </div>
+                <div id="adminResults"></div>
+                <div id="downloadSection" style="display: none; margin-top: 1rem;">
+                    <button class="success" onclick="downloadExcelFile()">📥 DOWNLOAD EXCEL CALCULATION SHEET (All Formulas)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CAPTIVE_BASE = 4000;
+        const CAPTIVE_TM_CAPACITY = 800;
+        const COMMERCIAL_TM_CAPACITY = 400;
+        const CAPTIVE_TM_VAR_COST = 80;
+        const COMMERCIAL_TM_VAR_COST = 240;
+        const TM_FIXED_COST = 150000;
+        const CAPTIVE_SHORTFALL_PENALTY = 200;
+        const PROJECT_MONTHS = 48;
+        const FINANCE_RATE = 0.18;
+        const DEPRECIATION_RATE = 0.30;
+        const SUNK_COST_RATE = 0.40;
+
+        const PLANT_MONTHLY_CAPACITIES = { 60: 7000, 90: 8000, 120: 10000 };
+        const PLANT_FIXED_COSTS = { 60: 600000, 90: 800000, 120: 1000000 };
+        const PLANT_VARIABLE_COSTS = { 60: 80, 90: 105, 120: 135 };
+        const CAPEX_AMOUNTS = { 60: 35000000, 90: 40000000, 120: 45000000 };
+        const ASP_ADJUSTMENTS = { 30: -75, 60: 0, 90: 50, 120: 100 };
+
+        let lastCalculationData = null;
+
+        function getCommercialVolume(plantCapacity, royaltyRate) {
+            const availableCapacity = PLANT_MONTHLY_CAPACITIES[plantCapacity] - CAPTIVE_BASE;
+            const percentages = { 150: 0.80, 250: 0.90, 350: 1.00 };
+            return Math.round(availableCapacity * (percentages[royaltyRate] || 1));
+        }
+
+        function getAdjustedASP(bidASP, paymentTerms) {
+            const adjustment = ASP_ADJUSTMENTS[paymentTerms] || 0;
+            return bidASP + adjustment;
+        }
+
+        function updateASPAdjustment() {
+            if (userAuctionData) {
+                const terms = parseInt(document.getElementById('paymentTerms').value);
+                const bidASP = userAuctionData.asp;
+                const effectiveASP = getAdjustedASP(bidASP, terms);
+
+                document.getElementById('aspAdjustmentDisplay').style.display = 'block';
+                document.getElementById('bidASP').textContent = bidASP;
+                document.getElementById('effectiveASP').textContent = effectiveASP;
+            }
+        }
+
+        let currentUser = null;
+        let isAdmin = false;
+        let userAuctionData = null;
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username) { alert('Please enter business name'); return; }
+
+            if (username === 'admin' && password === 'admin234') {
+                isAdmin = true;
+                currentUser = username;
+                showAdmin();
+            } else if (password === '') {
+                isAdmin = false;
+                currentUser = username;
+                showGameFlow();
+            } else {
+                alert('Invalid credentials');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            isAdmin = false;
+            lastCalculationData = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('gameFlow').classList.add('hidden');
+            document.getElementById('adminDash').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function showGameFlow() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('gameFlow').classList.remove('hidden');
+            document.getElementById('adminDash').classList.add('hidden');
+        }
+
+        function showAdmin() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('gameFlow').classList.add('hidden');
+            document.getElementById('adminDash').classList.remove('hidden');
+            adminRefreshResults();
+        }
+
+        function submitASPBid() {
+            const asp = parseInt(document.getElementById('aspBid').value);
+            if (!asp || asp < 1000 || asp > 4500) {
+                alert('Invalid price! Maximum price that can be quoted is ₹4,500/m³ (Minimum: ₹1,000/m³)');
+                return;
+            }
+
+            const bids = JSON.parse(localStorage.getItem('phase1_bids') || '{}');
+            if (Object.keys(bids).length >= 4 && !bids[currentUser]) {
+                alert('❌ Maximum 4 businesses reached!');
+                return;
+            }
+
+            bids[currentUser] = { asp: asp, submittedAt: new Date().toISOString() };
+            localStorage.setItem('phase1_bids', JSON.stringify(bids));
+
+            displayAuctionResults();
+            document.getElementById('phase2Instructions').style.display = 'block';
+            document.getElementById('phase2Section').classList.add('active');
+        }
+
+        function displayAuctionResults() {
+            const bids = JSON.parse(localStorage.getItem('phase1_bids') || '{}');
+            const sortedBids = Object.entries(bids)
+                .map(([name, data]) => ({ name, asp: data.asp, submittedAt: data.submittedAt || '' }))
+                .sort((a, b) => a.asp - b.asp || new Date(a.submittedAt) - new Date(b.submittedAt));
+
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            const allocations = [
+                { rank: 1, percentage: 100, color: 'rank-1' },
+                { rank: 2, percentage: 90, color: 'rank-2' },
+                { rank: 3, percentage: 80, color: 'rank-3' },
+                { rank: 4, percentage: 70, color: 'rank-4' }
+            ];
+
+            let userRank = 0, userCaptive = 0;
+
+            sortedBids.forEach((bid, index) => {
+                const alloc = allocations[index] || allocations[3];
+                const volume = Math.round(CAPTIVE_BASE * (alloc.percentage / 100));
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="rank-badge ${alloc.color}">Rank ${alloc.rank}</span></td>
+                    <td><strong>${bid.name}</strong></td>
+                    <td>₹${bid.asp}</td>
+                    <td>${alloc.percentage}%</td>
+                    <td><strong>${volume.toLocaleString()} m³</strong></td>
+                `;
+                tableBody.appendChild(row);
+
+                if (bid.name === currentUser) {
+                    userRank = alloc.rank;
+                    userCaptive = volume;
+                }
+            });
+
+            document.getElementById('yourResult').innerHTML = `
+                <div class="captive-box">
+                    <h4>✓ Your Allocation</h4>
+                    <div class="captive-value">${userCaptive.toLocaleString()} m³/month</div>
+                    <strong>Rank:</strong> ${userRank} | <strong>Price:</strong> ₹${bids[currentUser].asp}/m³
+                </div>
+            `;
+
+            userAuctionData = {
+                asp: bids[currentUser].asp,
+                rank: userRank,
+                captiveVolume: userCaptive
+            };
+
+            updateASPAdjustment();
+            document.getElementById('auctionResults').style.display = 'block';
+        }
+
+        function updateCommercialVolume() {
+            const capacity = document.getElementById('capacity').value;
+            const royalty = document.getElementById('royalty').value;
+
+            if (capacity && royalty) {
+                const commVol = getCommercialVolume(parseInt(capacity), parseInt(royalty));
+                document.getElementById('commercialDisplay').style.display = 'block';
+                document.getElementById('commVolume').textContent = commVol.toLocaleString();
+            } else {
+                document.getElementById('commercialDisplay').style.display = 'none';
+            }
+        }
+
+        function submitPhase2() {
+            const capacity = document.getElementById('capacity').value;
+            const royalty = document.getElementById('royalty').value;
+            const captiveTmCount = parseInt(document.getElementById('captiveTmCount').value);
+            const commercialTmCount = parseInt(document.getElementById('commercialTmCount').value);
+            const funding = parseFloat(document.getElementById('fundingAmount').value);
+            const paymentTerms = parseInt(document.getElementById('paymentTerms').value);
+
+            if (!capacity || !royalty) {
+                alert('Please fill all required fields');
+                return;
+            }
+
+            if (isNaN(captiveTmCount) || isNaN(commercialTmCount)) {
+                alert('Please enter fleet size (number of trucks) for both Captive and Commercial fleets');
+                return;
+            }
+
+            if (isNaN(funding) || funding <= 0) {
+                alert('Please enter Required Funds for Working Capital + Capex (₹ Crore)');
+                return;
+            }
+
+            const capacityDescData = { 60: '60 m³/day', 90: '90 m³/day', 120: '120 m³/day' };
+            const commercialVol = getCommercialVolume(parseInt(capacity), parseInt(royalty));
+            const effectiveASP = getAdjustedASP(userAuctionData.asp, paymentTerms);
+
+            const proposal = {
+                aspBid: userAuctionData.asp,
+                effectiveASP: effectiveASP,
+                auctionRank: userAuctionData.rank,
+                captiveVolume: userAuctionData.captiveVolume,
+                capacity: parseInt(capacity),
+                capacityDesc: capacityDescData[capacity],
+                capex: CAPEX_AMOUNTS[capacity],
+                royalty: parseInt(royalty),
+                commercialVolume: commercialVol,
+                captiveTmCount: captiveTmCount,
+                commercialTmCount: commercialTmCount,
+                funding: funding * 10000000,
+                paymentTerms: paymentTerms
+            };
+
+            let proposals = JSON.parse(localStorage.getItem('phase2_proposals') || '{}');
+            proposals[currentUser] = proposal;
+            localStorage.setItem('phase2_proposals', JSON.stringify(proposals));
+
+            alert('✓ Plan submitted!\n\nWait for admin to calculate results.');
+            logout();
+        }
+
+        function adminRefreshResults() {
+            const bids = JSON.parse(localStorage.getItem('phase1_bids') || '{}');
+            const bidCount = Object.keys(bids).length;
+
+            document.getElementById('bidCountDisplay').textContent = `${bidCount} of 4 Submissions Received`;
+
+            const sortedBids = Object.entries(bids)
+                .map(([name, data]) => ({ name, asp: data.asp, submittedAt: data.submittedAt || '' }))
+                .sort((a, b) => a.asp - b.asp || new Date(a.submittedAt) - new Date(b.submittedAt));
+
+            const adminTableBody = document.getElementById('adminTableBody');
+            adminTableBody.innerHTML = '';
+
+            const allocations = [
+                { rank: 1, percentage: 100, color: 'rank-1' },
+                { rank: 2, percentage: 90, color: 'rank-2' },
+                { rank: 3, percentage: 80, color: 'rank-3' },
+                { rank: 4, percentage: 70, color: 'rank-4' }
+            ];
+
+            sortedBids.forEach((bid, index) => {
+                const alloc = allocations[index] || allocations[3];
+                const volume = Math.round(CAPTIVE_BASE * (alloc.percentage / 100));
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="rank-badge ${alloc.color}">Rank ${alloc.rank}</span></td>
+                    <td><strong>${bid.name}</strong></td>
+                    <td>₹${bid.asp}</td>
+                    <td>${alloc.percentage}%</td>
+                    <td><strong>${volume.toLocaleString()} m³</strong></td>
+                `;
+                adminTableBody.appendChild(row);
+            });
+
+            const proposals = JSON.parse(localStorage.getItem('phase2_proposals') || '{}');
+            const select = document.getElementById('adminParticipantSelect');
+
+            if (Object.keys(proposals).length === 0) {
+                select.innerHTML = '<option value="">-- No plans yet --</option>';
+            } else {
+                select.innerHTML = '<option value="">-- Select Business --</option>';
+                Object.keys(proposals).forEach(name => {
+                    select.innerHTML += `<option value="${name}">${name}</option>`;
+                });
+            }
+        }
+
+        function adminLoadParticipantData() {
+            const name = document.getElementById('adminParticipantSelect').value;
+            if (!name) return;
+
+            const proposals = JSON.parse(localStorage.getItem('phase2_proposals') || '{}');
+            const proposal = proposals[name];
+
+            if (!proposal) {
+                alert('No plan found');
+                return;
+            }
+
+            const aspAdjustment = ASP_ADJUSTMENTS[proposal.paymentTerms];
+            const adjustmentText = aspAdjustment < 0 ? `(₹${aspAdjustment}/m³)` : aspAdjustment > 0 ? `(+₹${aspAdjustment}/m³)` : '(No change)';
+
+            document.getElementById('adminProposalData').innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Phase 1:</strong> Rank ${proposal.auctionRank} | Bid ₹${proposal.aspBid}/m³ | Effective ₹${proposal.effectiveASP}/m³ ${adjustmentText} | Captive ${proposal.captiveVolume.toLocaleString()} m³<br>
+                    <strong>Phase 2:</strong> ${proposal.capacityDesc} | Rate ₹${proposal.royalty}/m³ | Commercial ${proposal.commercialVolume.toLocaleString()} m³<br>
+                    <strong>Fleet:</strong> Captive ${proposal.captiveTmCount} | Commercial ${proposal.commercialTmCount} | Terms ${proposal.paymentTerms}d
+                </div>
+            `;
+
+            document.getElementById('adminParticipantData').style.display = 'block';
+            document.getElementById('downloadSection').style.display = 'none';
+            window.adminProposal = proposal;
+        }
+
+        function adminCalculateFinancials() {
+            if (!window.adminProposal) {
+                alert('Select a business');
+                return;
+            }
+
+            const p = window.adminProposal;
+            const months = PROJECT_MONTHS;
+            let totalRev = 0, totalEBITDA = 0, totalEBIT = 0;
+
+            for (let m = 1; m <= months; m++) {
+                const captiveNeeded = p.captiveVolume;
+                const captiveCapacity = p.captiveTmCount * CAPTIVE_TM_CAPACITY;
+                let deliverableCaptive, shortfall, penaltyCost;
+
+                if (captiveCapacity >= captiveNeeded) {
+                    deliverableCaptive = captiveNeeded;
+                    shortfall = 0;
+                    penaltyCost = 0;
+                } else {
+                    deliverableCaptive = captiveCapacity;
+                    shortfall = captiveNeeded - captiveCapacity;
+                    
+                    const tmsNeededForShortfall = shortfall / COMMERCIAL_TM_CAPACITY;
+                    if (p.commercialTmCount >= tmsNeededForShortfall) {
+                        deliverableCaptive = captiveNeeded;
+                        shortfall = 0;
+                        penaltyCost = 0;
+                    } else {
+                        const shortfallCovered = p.commercialTmCount * COMMERCIAL_TM_CAPACITY;
+                        const uncovered = shortfall - shortfallCovered;
+                        deliverableCaptive = captiveCapacity + shortfallCovered;
+                        penaltyCost = uncovered * CAPTIVE_SHORTFALL_PENALTY;
+                    }
+                }
+
+                const tmsUsedForShortfall = Math.min(shortfall / COMMERCIAL_TM_CAPACITY, p.commercialTmCount);
+                const tmsForCommercial = p.commercialTmCount - tmsUsedForShortfall;
+                const commercialCapacity = tmsForCommercial * COMMERCIAL_TM_CAPACITY;
+                const deliverableCommercial = Math.min(p.commercialVolume, commercialCapacity);
+
+                const revenue = (deliverableCaptive + deliverableCommercial) * p.effectiveASP;
+
+                const capRM = deliverableCaptive * (p.effectiveASP * 0.70);
+                const commRM = deliverableCommercial * (p.effectiveASP * 0.67);
+                const royalty = deliverableCommercial * p.royalty;
+                const plantFixedCost = PLANT_FIXED_COSTS[p.capacity];
+                const plantVariableCost = (deliverableCaptive + deliverableCommercial) * PLANT_VARIABLE_COSTS[p.capacity];
+                const tmFixedCost = (p.captiveTmCount + p.commercialTmCount) * TM_FIXED_COST;
+                const captiveVarCost = deliverableCaptive * CAPTIVE_TM_VAR_COST;
+                const commercialVarCost = deliverableCommercial * COMMERCIAL_TM_VAR_COST;
+
+                const operatingCosts = capRM + commRM + royalty + plantFixedCost + plantVariableCost + tmFixedCost + captiveVarCost + commercialVarCost + penaltyCost;
+                const ebitda = revenue - operatingCosts;
+                
+                const deprec = (p.capex * DEPRECIATION_RATE) / PROJECT_MONTHS;
+                const monthlyReceivables = revenue * (p.paymentTerms / 30);
+                const totalRequirement = p.capex + monthlyReceivables;
+                const fundedAmount = Math.min(p.funding, totalRequirement);
+                const fundingShortfall = Math.max(0, totalRequirement - p.funding);
+                // Arranged funds financed at normal rate; shortfall at DOUBLE rate (36% p.a.)
+                const financeCost = ((fundedAmount * FINANCE_RATE) + (fundingShortfall * FINANCE_RATE * 2)) / 12;
+                
+                const ebit = ebitda - deprec - financeCost;
+
+                totalRev += revenue;
+                totalEBITDA += ebitda;
+                totalEBIT += ebit;
+            }
+
+            const sunkCost = p.capex * SUNK_COST_RATE;
+            const totalNetProfit = totalEBIT - sunkCost - p.capex;
+            const roi = (totalNetProfit / p.capex) * 100;
+            const status = roi > 25 ? 'STRONG ✅' : roi > 15 ? 'MODERATE ⚠️' : roi > 5 ? 'MARGINAL ⚠️' : 'WEAK ❌';
+
+            // Recompute month-1 breakdown for detailed export (steady-state: same every month)
+            const mb = (function() {
+                const captiveNeeded = p.captiveVolume;
+                const captiveCapacity = p.captiveTmCount * CAPTIVE_TM_CAPACITY;
+                let deliverableCaptive, shortfall, penaltyCost;
+                if (captiveCapacity >= captiveNeeded) {
+                    deliverableCaptive = captiveNeeded; shortfall = 0; penaltyCost = 0;
+                } else {
+                    deliverableCaptive = captiveCapacity;
+                    shortfall = captiveNeeded - captiveCapacity;
+                    const tmsNeeded = shortfall / COMMERCIAL_TM_CAPACITY;
+                    if (p.commercialTmCount >= tmsNeeded) {
+                        deliverableCaptive = captiveNeeded; shortfall = 0; penaltyCost = 0;
+                    } else {
+                        const covered = p.commercialTmCount * COMMERCIAL_TM_CAPACITY;
+                        deliverableCaptive = captiveCapacity + covered;
+                        penaltyCost = (shortfall - covered) * CAPTIVE_SHORTFALL_PENALTY;
+                    }
+                }
+                const tmsUsed = Math.min(shortfall / COMMERCIAL_TM_CAPACITY, p.commercialTmCount);
+                const tmsForComm = p.commercialTmCount - tmsUsed;
+                const deliverableCommercial = Math.min(p.commercialVolume, tmsForComm * COMMERCIAL_TM_CAPACITY);
+                const revenue = (deliverableCaptive + deliverableCommercial) * p.effectiveASP;
+                const capRM = deliverableCaptive * p.effectiveASP * 0.70;
+                const commRM = deliverableCommercial * p.effectiveASP * 0.67;
+                const royaltyCost = deliverableCommercial * p.royalty;
+                const plantFixed = PLANT_FIXED_COSTS[p.capacity];
+                const plantVar = (deliverableCaptive + deliverableCommercial) * PLANT_VARIABLE_COSTS[p.capacity];
+                const tmFixed = (p.captiveTmCount + p.commercialTmCount) * TM_FIXED_COST;
+                const capTmVar = deliverableCaptive * CAPTIVE_TM_VAR_COST;
+                const commTmVar = deliverableCommercial * COMMERCIAL_TM_VAR_COST;
+                const opCosts = capRM + commRM + royaltyCost + plantFixed + plantVar + tmFixed + capTmVar + commTmVar + penaltyCost;
+                const ebitda = revenue - opCosts;
+                const deprec = (p.capex * DEPRECIATION_RATE) / PROJECT_MONTHS;
+                const receivables = revenue * (p.paymentTerms / 30);
+                const totalReq = p.capex + receivables;
+                const funded = Math.min(p.funding, totalReq);
+                const fundShort = Math.max(0, totalReq - p.funding);
+                const financeCost = ((funded * FINANCE_RATE) + (fundShort * FINANCE_RATE * 2)) / 12;
+                const ebit = ebitda - deprec - financeCost;
+                return { deliverableCaptive, deliverableCommercial, shortfall, penaltyCost, revenue,
+                         capRM, commRM, royaltyCost, plantFixed, plantVar, tmFixed, capTmVar, commTmVar,
+                         opCosts, ebitda, deprec, receivables, totalReq, funded, fundShort, financeCost, ebit };
+            })();
+
+            lastCalculationData = {
+                participantName: document.getElementById('adminParticipantSelect').value,
+                proposal: p,
+                monthly: mb,
+                totalRev,
+                totalEBITDA,
+                totalEBIT,
+                totalNetProfit,
+                sunkCost,
+                roi,
+                status
+            };
+
+            document.getElementById('adminResults').innerHTML = `
+                <div style="background: #fff3cd; padding: 1.5rem; border-radius: 6px; margin-top: 1rem; border: 2px solid #ff6b35;">
+                    <strong style="color:#ff6b35;">📊 FINANCIAL RESULTS (48 MONTHS)</strong><br><br>
+                    <strong>Revenue & Operations:</strong><br>
+                    ├─ Base Price: ₹${p.aspBid}/m³ | Effective: ₹${p.effectiveASP}/m³<br>
+                    ├─ Captive: ${p.captiveVolume.toLocaleString()} m³ | Commercial: ${p.commercialVolume.toLocaleString()} m³<br>
+                    └─ Fleet: Captive ${p.captiveTmCount} | Commercial ${p.commercialTmCount}<br><br>
+                    <strong style="color:#ff6b35;">KEY METRICS:</strong><br>
+                    ├─ Total Revenue: ₹${(totalRev/10000000).toFixed(2)} Cr<br>
+                    ├─ EBITDA: ₹${(totalEBITDA/10000000).toFixed(2)} Cr<br>
+                    ├─ EBIT: ₹${(totalEBIT/10000000).toFixed(2)} Cr<br>
+                    ├─ Net Profit: ₹${(totalNetProfit/10000000).toFixed(2)} Cr<br>
+                    ├─ ROI: ${roi.toFixed(2)}%<br>
+                    └─ Status: ${status}
+                </div>
+            `;
+
+            document.getElementById('downloadSection').style.display = 'block';
+        }
+
+        function downloadExcelFile() {
+            if (!lastCalculationData) {
+                alert('Please calculate results first');
+                return;
+            }
+
+            const d = lastCalculationData;
+            const p = d.proposal;
+            const m = d.monthly;
+            const f = n => Math.round(n).toLocaleString('en-IN');
+
+            let csv = 'PLANT ORDER BIDDING GAME - COMPLETE CALCULATION WORKBOOK\n';
+            csv += 'Business:,' + d.participantName + '\n';
+            csv += 'Report Date:,' + new Date().toLocaleDateString() + '\n\n';
+
+            csv += 'SECTION 1: INPUTS (PARTICIPANT DECISIONS)\n';
+            csv += 'Item,Value\n';
+            csv += 'Auction Rank,' + p.auctionRank + '\n';
+            csv += 'Bid Price (Rs/m3),' + p.aspBid + '\n';
+            csv += 'Plant Capacity,' + p.capacityDesc + '\n';
+            csv += 'CAPEX (Rs),' + f(p.capex) + '\n';
+            csv += 'Royalty for Commercial Volume (Rs/m3),' + p.royalty + '\n';
+            csv += 'Captive Fleet (Trucks),' + p.captiveTmCount + '\n';
+            csv += 'Commercial Fleet (Trucks),' + p.commercialTmCount + '\n';
+            csv += 'Funds Arranged (Rs),' + f(p.funding) + '\n';
+            csv += 'Payment Terms (Days),' + p.paymentTerms + '\n\n';
+
+            csv += 'SECTION 2: VOLUME & PRICE CALCULATIONS\n';
+            csv += 'Item,Formula,Calculation,Result\n';
+            csv += 'Captive Volume (m3),Based on Rank (1=4000 / 2=3600 / 3=3200 / 4=2800),Rank ' + p.auctionRank + ',' + f(p.captiveVolume) + '\n';
+            csv += 'Commercial Volume (m3),(Plant Capacity - 4000) x % (150=>80% / 250=>90% / 350=>100%),Royalty Rs' + p.royalty + ',' + f(p.commercialVolume) + '\n';
+            csv += 'ASP Adjustment (Rs/m3),30d=-75 / 60d=0 / 90d=+50 / 120d=+100,' + p.paymentTerms + ' days,' + (p.effectiveASP - p.aspBid) + '\n';
+            csv += 'Effective ASP (Rs/m3),Bid Price + Adjustment,' + p.aspBid + ' + ' + (p.effectiveASP - p.aspBid) + ',' + p.effectiveASP + '\n\n';
+
+            csv += 'SECTION 3: FLEET ALLOCATION\n';
+            csv += 'Item,Formula,Calculation,Result\n';
+            csv += 'Captive Fleet Capacity (m3),Captive Trucks x 800,' + p.captiveTmCount + ' x 800,' + f(p.captiveTmCount * 800) + '\n';
+            csv += 'Delivered Captive (m3),MIN(Need / Capacity incl. commercial support),,' + f(m.deliverableCaptive) + '\n';
+            csv += 'Unserved Captive Shortfall (m3),Captive Need - Total Delivered Capacity,,' + f(Math.max(0, p.captiveVolume - m.deliverableCaptive)) + '\n';
+            csv += 'Shortfall Penalty (Rs),Unserved Captive x 200,,' + f(m.penaltyCost) + '\n';
+            csv += 'Delivered Commercial (m3),MIN(Commercial Volume / Remaining Commercial Fleet x 400),,' + f(m.deliverableCommercial) + '\n\n';
+
+            csv += 'SECTION 4: MONTHLY REVENUE\n';
+            csv += 'Item,Formula,Calculation,Result (Rs)\n';
+            csv += 'Monthly Revenue,(Delivered Captive + Delivered Commercial) x Effective ASP,(' + f(m.deliverableCaptive) + ' + ' + f(m.deliverableCommercial) + ') x ' + p.effectiveASP + ',' + f(m.revenue) + '\n\n';
+
+            csv += 'SECTION 5: MONTHLY OPERATING COSTS\n';
+            csv += 'Cost Item,Formula,Calculation,Result (Rs)\n';
+            csv += 'Captive Raw Material,Delivered Captive x ASP x 70%,' + f(m.deliverableCaptive) + ' x ' + p.effectiveASP + ' x 0.70,' + f(m.capRM) + '\n';
+            csv += 'Commercial Raw Material,Delivered Commercial x ASP x 67%,' + f(m.deliverableCommercial) + ' x ' + p.effectiveASP + ' x 0.67,' + f(m.commRM) + '\n';
+            csv += 'Royalty to Client,Delivered Commercial x Royalty Rate,' + f(m.deliverableCommercial) + ' x ' + p.royalty + ',' + f(m.royaltyCost) + '\n';
+            csv += 'Plant Fixed Cost,Per plant size (60=6L / 90=8L / 120=10L),,' + f(m.plantFixed) + '\n';
+            csv += 'Plant Variable Cost,Total Volume x Rate (60=80 / 90=105 / 120=135),,' + f(m.plantVar) + '\n';
+            csv += 'Fleet Fixed Cost,(Captive + Commercial Trucks) x 150000,(' + p.captiveTmCount + ' + ' + p.commercialTmCount + ') x 150000,' + f(m.tmFixed) + '\n';
+            csv += 'Captive Fleet Variable,Delivered Captive x 80,' + f(m.deliverableCaptive) + ' x 80,' + f(m.capTmVar) + '\n';
+            csv += 'Commercial Fleet Variable,Delivered Commercial x 240,' + f(m.deliverableCommercial) + ' x 240,' + f(m.commTmVar) + '\n';
+            csv += 'Shortfall Penalty,Unserved Captive x 200,,' + f(m.penaltyCost) + '\n';
+            csv += 'TOTAL OPERATING COSTS,Sum of all above,,' + f(m.opCosts) + '\n\n';
+
+            csv += 'SECTION 6: FINANCE & DEPRECIATION (MONTHLY)\n';
+            csv += 'Item,Formula,Calculation,Result (Rs)\n';
+            csv += 'Depreciation,CAPEX x 10% / 12 spread over project,' + f(p.capex) + ' x ' + (DEPRECIATION_RATE*100) + '% / ' + PROJECT_MONTHS + ',' + f(m.deprec) + '\n';
+            csv += 'Working Capital (Receivables),Revenue x (Payment Days / 30),' + f(m.revenue) + ' x ' + p.paymentTerms + '/30,' + f(m.receivables) + '\n';
+            csv += 'Total Funding Requirement,CAPEX + Working Capital,' + f(p.capex) + ' + ' + f(m.receivables) + ',' + f(m.totalReq) + '\n';
+            csv += 'Funds Arranged (Normal 18% p.a.),MIN(Funds / Requirement),,' + f(m.funded) + '\n';
+            csv += 'Funding Shortfall (DOUBLE 36% p.a.),MAX(0 / Requirement - Funds),,' + f(m.fundShort) + '\n';
+            csv += 'Monthly Finance Cost,(Funded x 18% + Shortfall x 36%) / 12,(' + f(m.funded) + ' x 18% + ' + f(m.fundShort) + ' x 36%) / 12,' + f(m.financeCost) + '\n\n';
+
+            csv += 'SECTION 7: MONTHLY PROFIT\n';
+            csv += 'Item,Formula,Calculation,Result (Rs)\n';
+            csv += 'EBITDA,Revenue - Operating Costs,' + f(m.revenue) + ' - ' + f(m.opCosts) + ',' + f(m.ebitda) + '\n';
+            csv += 'EBIT,EBITDA - Depreciation - Finance Cost,' + f(m.ebitda) + ' - ' + f(m.deprec) + ' - ' + f(m.financeCost) + ',' + f(m.ebit) + '\n\n';
+
+            csv += 'SECTION 8: 48-MONTH SUMMARY\n';
+            csv += 'Item,Formula,Calculation,Result\n';
+            csv += 'Total Revenue (Rs Cr),Monthly Revenue x 48,' + f(m.revenue) + ' x 48,' + (d.totalRev/10000000).toFixed(2) + '\n';
+            csv += 'Total EBITDA (Rs Cr),Monthly EBITDA x 48,,' + (d.totalEBITDA/10000000).toFixed(2) + '\n';
+            csv += 'Total EBIT (Rs Cr),Monthly EBIT x 48,,' + (d.totalEBIT/10000000).toFixed(2) + '\n';
+            csv += 'Sunk Cost (Rs Cr),CAPEX x 40%,' + f(p.capex) + ' x 0.40,' + (d.sunkCost/10000000).toFixed(2) + '\n';
+            csv += 'NET PROFIT (Rs Cr),Total EBIT - Sunk Cost - CAPEX,' + (d.totalEBIT/10000000).toFixed(2) + ' - ' + (d.sunkCost/10000000).toFixed(2) + ' - ' + (p.capex/10000000).toFixed(2) + ',' + (d.totalNetProfit/10000000).toFixed(2) + '\n';
+            csv += 'ROI (%),(Net Profit / CAPEX) x 100,,' + d.roi.toFixed(2) + '%\n';
+            csv += 'STATUS,ROI>25=STRONG / 15-25=MODERATE / 5-15=MARGINAL / <5=WEAK,,' + d.status.replace('✅','').replace('⚠️','').replace('❌','').trim() + '\n';
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            const filename = 'Calculation_' + d.participantName.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            alert('✅ Complete calculation workbook downloaded!\n\nFile: ' + filename + '\n\nIncludes all formulas, step-by-step calculations and 48-month summary. Opens directly in Excel.');
+        }
+
+        function adminStartNewGame() {
+            if (!confirm('⚠️ Clear all data and start new game?')) return;
+            localStorage.removeItem('phase1_bids');
+            localStorage.removeItem('phase2_proposals');
+            lastCalculationData = null;
+            alert('✓ Game reset!');
+            location.reload();
+        }
+    </script>
+</body>
+</html>
